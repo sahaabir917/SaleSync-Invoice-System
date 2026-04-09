@@ -252,4 +252,4 @@ def invoice_upload():
 # Entry point
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    app.run(port=config.FLASK_PORT, debug=True)
+    app.run(host="0.0.0.0", port=config.FLASK_PORT, debug=False)
