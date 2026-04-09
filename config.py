@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATA_DIR = os.getenv("DATA_DIR", ".")
-FLASK_PORT = int(os.getenv("FLASK_PORT", 5000))
+FLASK_PORT = int(os.getenv("FLASK_PORT", 8000))
 FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")
 
 # Google Drive — OAuth 2.0 (preferred, set up via the Connect button in the UI)
