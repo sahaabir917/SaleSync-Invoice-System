@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body x-data="invoiceApp()" x-init="init()">
+
+  <!-- ── App Bar ── -->
+  <header class="app-bar">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+    <h1>Invoice Platform</h1>
+
+    <!-- Drive status + connect button -->
+    <div style="display:flex; align-items:center; gap:10px;" x-cloak>
+      <!-- Connected state -->
+      <template x-if="driveConnected">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="drive-pill">
+            <div class="drive-dot connected"></div>
+            <span>Drive Connected</span>
+          </div>
+          <button class="btn btn-ghost" style="padding:4px 10px; font-size:11.5px; color:#94a3b8;" @click="disconnectDrive()">Disconnect</button>
+        </div>
+      </template>
+      <!-- Not connected state -->
+      <template x-if="!driveConnected">
+        <button class="btn btn-google" style="padding:5px 14px; font-size:12.5px;" @click="connectDrive()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="#4285F4"/>
+            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-3.73 0-6.9 2.55-7.8 6h2.16C7.21 7.55 9.4 6 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="white"/>
+          </svg>
+          Connect Google Drive
+        </button>
+      </template>
+    </div>
+
+    <span class="subtitle">E-Commerce Order Invoicing</span>
+  </header>
+
+  <!-- ── Google Drive Setup Modal ── -->
+  <div class="modal-backdrop" x-show="showDriveModal" x-cloak @click.self="showDriveModal = false">
+    <div class="modal">
+      <h2>
+        <svg width="20" height="20" viewBox="0 0 87.3 78" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+          <path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/>
+          <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.85 11.2z" fill="#ea4335"/>
+          <path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.95 0H34.35c-1.55 0-3.1.45-4.45 1.2z" fill="#00832d"/>
+          <path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.45 1.2h50.9c1.55 0 3.1-.4 4.45-1.2z" fill="#2684fc"/>
+          <path d="M73.4 26.5l-12.6-21.8C60 3.3 58.85 2.2 57.5 1.4L43.75 25 59.9 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+        </svg>
+        Connect Google Drive
+      </h2>
+      <p class="modal-sub">One-time setup to enable PDF uploads to your Drive.</p>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">Go to <strong>Google Cloud Console</strong> → <strong>APIs &amp; Services → Credentials</strong></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">Click <strong>Create Credentials → OAuth 2.0 Client ID</strong> → choose <strong>Web application</strong></div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">Under <em>Authorized redirect URIs</em>, add exactly:<br><code>http://localhost:5000/api/drive/callback</code></div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">Copy the <strong>Client ID</strong> and <strong>Client Secret</strong> into your <code>.env</code> file as <code>GOOGLE_OAUTH_CLIENT_ID</code> and <code>GOOGLE_OAUTH_CLIENT_SECRET</code></div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-text">Restart the server (<code>python app.py</code>), then click <strong>Connect</strong> below.</div>
+      </div>
+
+      <hr class="divider">
+      <div class="modal-actions">
+        <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener" class="btn btn-primary" style="text-decoration:none;">
+          Open Google Cloud Console
+        </a>
+        <button class="btn btn-ghost" @click="showDriveModal = false">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="main">
+
+    <!-- ══ SECTION 1: Order Information ══ -->
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Order Information
+      </div>
+
+      <div class="grid-4">
+        <!-- Date -->
+        <div class="field" :class="errors.dt ? 'field-error' : ''">
+          <label>Date <span class="required">*</span></label>
+          <select x-model="form.dt">
+            <option value="">— Select Date —</option>
+            <template x-for="d in dates" :key="d.date">
+              <option :value="d.date" x-text="d.display"></option>
+            </template>
+          </select>
+          <span class="error-msg" x-show="errors.dt" x-text="errors.dt"></span>
+        </div>
+
+        <!-- Order Timestamp -->
+        <div class="field span-2" :class="errors.order_ts ? 'field-error' : ''">
+          <label>Order Timestamp <span class="required">*</span></label>
+          <input type="datetime-local" x-model="form.order_ts" step="1">
+          <span class="error-msg" x-show="errors.order_ts" x-text="errors.order_ts"></span>
+        </div>
+
+        <!-- Channel -->
+        <div class="field">
+          <label>Channel</label>
+          <select x-model="form.channel">
+            <option value="web">Web</option>
+            <option value="app">App</option>
+          </select>
+        </div>
+
+        <!-- Order ID -->
+        <div class="field" :class="errors.order_id ? 'field-error' : ''">
+          <label>Order ID <span class="required">*</span></label>
+          <input type="text" x-model="form.order_id" placeholder="e.g. 643611">
+          <span class="error-msg" x-show="errors.order_id" x-text="errors.order_id"></span>
+        </div>
+
+        <!-- Item Seq -->
+        <div class="field">
+          <label>Item Sequence</label>
+          <input type="number" x-model.number="form.item_seq" min="1" value="1">
+        </div>
+
+        <!-- Coupon Code -->
+        <div class="field">
+          <label>Coupon Code</label>
+          <input type="text" x-model="form.coupon_code" placeholder="e.g. FEST20">
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SECTION 2: Customer ══ -->
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Customer
+      </div>
+
+      <div class="grid-2">
+        <div class="field" :class="errors.customer_id ? 'field-error' : ''">
+          <label>Customer <span class="required">*</span></label>
+          <div class="autocomplete-wrap">
+            <input
+              type="text"
+              x-model="customerQuery"
+              @input="onCustomerInput()"
+              @blur="hideCustomerDropdown()"
+              placeholder="Type customer ID or country..."
+              autocomplete="off"
+            >
+            <div class="autocomplete-dropdown" x-show="showCustomerDropdown" x-cloak>
+              <template x-if="customerResults.length === 0">
+                <div class="autocomplete-no-results">No results found</div>
+              </template>
+              <template x-for="c in customerResults" :key="c.customer_id">
+                <div class="autocomplete-item" @mousedown.prevent="selectCustomer(c)">
+                  <div class="cust-id" x-text="c.customer_id"></div>
+                  <div class="cust-loc" x-text="(c.country || '') + (c.state ? ', ' + c.state : '')"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+          <span class="error-msg" x-show="errors.customer_id" x-text="errors.customer_id"></span>
+
+          <div class="info-chip" x-show="customerInfo" x-cloak>
+            <div class="chip-title">Selected Customer</div>
+            <strong x-text="customerInfo?.customer_id"></strong><br>
+            <span x-text="(customerInfo?.country || '') + (customerInfo?.state ? ' · ' + customerInfo.state : '')"></span>
+            <template x-if="customerInfo?.phone">
+              <span> · <span x-text="customerInfo.phone"></span></span>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SECTION 3: Product ══ -->
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Product
+      </div>
+
+      <div class="grid-3" style="margin-bottom: 16px;">
+        <div class="field">
+          <label>Category</label>
+          <select x-model="selectedCategory" @change="onCategoryChange()">
+            <option value="">— All Categories —</option>
+            <template x-for="c in categories" :key="c.category_code">
+              <option :value="c.category_code" x-text="c.category_name"></option>
+            </template>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Brand</label>
+          <select x-model="selectedBrand" @change="onBrandChange()" :disabled="brands.length === 0">
+            <option value="">— All Brands —</option>
+            <template x-for="b in brands" :key="b.brand_code">
+              <option :value="b.brand_code" x-text="b.brand_name + ' (' + b.brand_code + ')'"></option>
+            </template>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Search Product</label>
+          <input
+            type="text"
+            x-model="productQuery"
+            @input.debounce.400ms="onProductSearch()"
+            placeholder="ID, SKU, color..."
+            :disabled="!selectedCategory && !selectedBrand"
+          >
+        </div>
+      </div>
+
+      <div class="field" :class="errors.product_id ? 'field-error' : ''">
+        <label>Product <span class="required">*</span></label>
+        <select x-model="form.product_id" @change="onProductChange()" :disabled="products.length === 0">
+          <option value="" x-text="(!selectedCategory && !selectedBrand) ? '— Select category or brand first —' : (products.length === 0 ? '— No products found —' : '— Select a product —')"></option>
+          <template x-for="p in products" :key="p.product_id">
+            <option :value="p.product_id"
+              x-text="p.sku + ' · ' + (p.color || '') + (p.size ? ' / ' + p.size : '') + ' [' + p.product_id + ']'">
+            </option>
+          </template>
+        </select>
+        <span class="error-msg" x-show="errors.product_id" x-text="errors.product_id"></span>
+
+        <div class="info-chip" x-show="productInfo" x-cloak>
+          <div class="chip-title">Selected Product</div>
+          <strong x-text="productInfo?.sku"></strong> &nbsp;·&nbsp;
+          <span x-text="(productInfo?.color || '') + (productInfo?.size ? ' / ' + productInfo.size : '')"></span><br>
+          <span x-text="'Material: ' + (productInfo?.material || '—')"></span>
+          &nbsp;·&nbsp;
+          <span x-text="'Weight: ' + (productInfo?.weight_grams || '—') + 'g'"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SECTION 4: Pricing ══ -->
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Pricing
+      </div>
+
+      <div class="grid-4" style="margin-bottom: 20px;">
+        <div class="field" :class="errors.quantity ? 'field-error' : ''">
+          <label>Quantity <span class="required">*</span></label>
+          <input type="number" x-model.number="form.quantity" min="1" step="1" placeholder="1">
+          <span class="error-msg" x-show="errors.quantity" x-text="errors.quantity"></span>
+        </div>
+
+        <div class="field">
+          <label>Currency</label>
+          <select x-model="form.unit_price_currency">
+            <template x-for="c in currencies" :key="c">
+              <option :value="c" x-text="c"></option>
+            </template>
+          </select>
+        </div>
+
+        <div class="field" :class="errors.unit_price ? 'field-error' : ''">
+          <label>Unit Price <span class="required">*</span></label>
+          <input type="number" x-model.number="form.unit_price" min="0" step="0.01" placeholder="0.00">
+          <span class="error-msg" x-show="errors.unit_price" x-text="errors.unit_price"></span>
+        </div>
+
+        <div class="field" :class="errors.discount_pct ? 'field-error' : ''">
+          <label>Discount %</label>
+          <input type="number" x-model.number="form.discount_pct" min="0" max="100" step="0.1" placeholder="0">
+          <span class="error-msg" x-show="errors.discount_pct" x-text="errors.discount_pct"></span>
+        </div>
+
+        <div class="field">
+          <label>Tax Amount</label>
+          <input type="number" x-model.number="form.tax_amount" min="0" step="0.01" placeholder="0.00">
+        </div>
+      </div>
+
+      <!-- Total display -->
+      <div class="total-display">
+        <div>
+          <div class="total-label">Invoice Total</div>
+          <div class="total-breakdown" x-show="form.unit_price">
+            <span x-text="'(' + (form.quantity||0) + ' × ' + currencySymbol + (parseFloat(form.unit_price)||0).toFixed(2)"></span>
+            <template x-if="parseFloat(form.discount_pct) > 0">
+              <span x-text="' − ' + form.discount_pct + '%'"></span>
+            </template>
+            <template x-if="parseFloat(form.tax_amount) > 0">
+              <span x-text="' + tax ' + currencySymbol + (parseFloat(form.tax_amount)||0).toFixed(2)"></span>
+            </template>
+            <span>)</span>
+          </div>
+        </div>
+        <div class="total-amount" x-text="formattedTotal"></div>
+      </div>
+    </div>
+
+    <!-- ══ SECTION 5: Actions ══ -->
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Generate Invoice
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-outline" @click="previewInvoice()" :disabled="loadingPreview">
+          <template x-if="loadingPreview"><span class="spinner" style="border-top-color: var(--indigo);"></span></template>
+          <template x-if="!loadingPreview">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </template>
+          Preview
+        </button>
+
+        <button class="btn btn-primary" @click="downloadPdf()" :disabled="loadingDownload">
+          <template x-if="loadingDownload"><span class="spinner"></span></template>
+          <template x-if="!loadingDownload">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </template>
+          Download PDF
+        </button>
+
+        <button
+          class="btn btn-success"
+          @click="uploadToDrive()"
+          :disabled="loadingUpload || !driveConnected"
+          :title="!driveConnected ? 'Configure Google Drive credentials first (see README)' : 'Generate PDF and upload to Google Drive'"
+        >
+          <template x-if="loadingUpload"><span class="spinner"></span></template>
+          <template x-if="!loadingUpload">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          </template>
+          <span x-text="driveConnected ? 'Upload to Drive' : 'Drive Not Configured'"></span>
+        </button>
+
+        <button class="btn btn-ghost" @click="resetForm()" style="margin-left: auto;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.37"/></svg>
+          Reset
+        </button>
+      </div>
+
+      <!-- Upload Success Card -->
+      <div class="success-card" x-show="uploadResult" x-cloak>
+        <h3>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Invoice uploaded to Google Drive!
+        </h3>
+        <p style="font-size: 13px; color: #065f46; margin-bottom: 8px;">
+          File: <strong x-text="uploadResult?.filename"></strong>
+        </p>
+        <a :href="uploadResult?.drive_url" target="_blank" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          View in Google Drive
+        </a>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── Toast ── -->
+  <div class="toast" :class="toast?.type" x-show="toast" x-cloak x-text="toast?.message"></div>
+
+  <script src="/static/js/app.js"></script>
+  {% if drive_connected_flash %}
+  <script>
+    // Show success toast after OAuth redirect
+    document.addEventListener('alpine:init', () => {
+      setTimeout(() => {
+        const app = document.querySelector('[x-data]')?.__x?.$data;
+        if (app) app.showToast('Google Drive connected successfully!', 'success');
+      }, 800);
+    });
+  </script>
+  {% endif %}
+</body>
+</html>

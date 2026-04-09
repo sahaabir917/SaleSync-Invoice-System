@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice {{ order_id }}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 18mm 16mm 18mm;
+    }
+
+    body {
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 11px;
+      color: #1e293b;
+      background: #ffffff;
+    }
+
+    /* ── Header ── */
+    .header-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 4mm;
+    }
+
+    .header-table td { vertical-align: top; padding: 0; }
+
+    .company-name {
+      font-size: 20px;
+      font-weight: bold;
+      color: #4f46e5;
+      letter-spacing: -0.5px;
+    }
+
+    .company-address {
+      font-size: 10px;
+      color: #64748b;
+      margin-top: 4px;
+      line-height: 1.6;
+    }
+
+    .invoice-wordmark {
+      font-size: 34px;
+      font-weight: bold;
+      color: #4f46e5;
+      letter-spacing: -1px;
+      text-align: right;
+    }
+
+    .invoice-meta {
+      font-size: 10.5px;
+      color: #475569;
+      line-height: 1.8;
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    .invoice-meta strong { color: #1e293b; }
+
+    .channel-badge {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 9px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .channel-web { background: #e0e7ff; color: #4338ca; }
+    .channel-app { background: #d1fae5; color: #065f46; }
+
+    /* ── Divider ── */
+    .divider {
+      width: 100%;
+      height: 3px;
+      background-color: #4f46e5;
+      margin-bottom: 5mm;
+    }
+
+    /* ── Info blocks ── */
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 5mm;
+    }
+
+    .info-table td {
+      vertical-align: top;
+      width: 50%;
+      padding: 0 4mm 0 0;
+    }
+
+    .info-table td:last-child { padding-right: 0; }
+
+    .info-block {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px 12px;
+    }
+
+    .info-block-title {
+      font-size: 8.5px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      margin-bottom: 5px;
+    }
+
+    .info-block p {
+      font-size: 10.5px;
+      color: #334155;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .info-block p strong { color: #0f172a; }
+
+    .coupon-badge {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px dashed #6ee7b7;
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    /* ── Section title ── */
+    .section-title {
+      font-size: 8.5px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      margin-bottom: 3px;
+    }
+
+    /* ── Items table ── */
+    table.items {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 5mm;
+    }
+
+    table.items thead tr { background-color: #4f46e5; color: #ffffff; }
+
+    table.items thead th {
+      font-size: 8.5px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 7px 8px;
+      text-align: left;
+    }
+
+    table.items thead th.right,
+    table.items tbody td.right { text-align: right; }
+
+    table.items tbody td {
+      padding: 7px 8px;
+      font-size: 10px;
+      color: #334155;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+
+    .product-id {
+      font-family: Courier, monospace;
+      font-size: 9px;
+      color: #6366f1;
+    }
+
+    .sku-val { font-weight: bold; color: #1e293b; }
+    .sub-label { font-size: 8.5px; color: #94a3b8; display: block; }
+
+    /* ── Pricing ── */
+    .pricing-outer { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+    .pricing-outer td.spacer { width: 55%; }
+
+    .pricing-box {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+    }
+
+    .pricing-row td {
+      padding: 6px 12px;
+      font-size: 10.5px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .pricing-row td.plabel { color: #64748b; }
+    .pricing-row td.pamount { text-align: right; font-weight: 500; color: #1e293b; }
+    .pricing-row.disc td.plabel  { color: #059669; }
+    .pricing-row.disc td.pamount { color: #059669; }
+
+    .pricing-total td {
+      padding: 9px 12px;
+      background-color: #4f46e5;
+      color: #ffffff;
+    }
+
+    .pricing-total td.plabel  { font-size: 13px; font-weight: bold; }
+    .pricing-total td.pamount { font-size: 15px; font-weight: bold; text-align: right; }
+
+    /* ── Thank you ── */
+    .thank-you {
+      background: #f8fafc;
+      border-left: 4px solid #4f46e5;
+      padding: 8px 12px;
+      margin-bottom: 5mm;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .thank-you p { font-size: 11px; font-weight: bold; color: #4f46e5; margin: 0 0 2px; }
+    .thank-you small { font-size: 9.5px; color: #94a3b8; }
+
+    /* ── Footer ── */
+    .footer-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-top: 1px solid #e2e8f0;
+      margin-top: 5mm;
+    }
+
+    .footer-table td {
+      font-size: 9px;
+      color: #94a3b8;
+      vertical-align: top;
+      padding-top: 4px;
+      line-height: 1.6;
+    }
+
+    .footer-table td strong { color: #64748b; }
+    .footer-table td.right  { text-align: right; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <table class="header-table">
+    <tr>
+      <td style="width:55%;">
+        <div class="company-name">{{ company_name }}</div>
+        <div class="company-address">{{ company_address }}</div>
+      </td>
+      <td style="width:45%;">
+        <div class="invoice-wordmark">INVOICE</div>
+        <div class="invoice-meta">
+          <strong># {{ order_id }}</strong><br>
+          Date: {{ dt }}&nbsp;&nbsp;|&nbsp;&nbsp;Time: {{ order_ts }}<br>
+          <span class="channel-badge channel-{{ channel }}">{{ channel }}</span>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="divider"></div>
+
+  <!-- ── Bill To + Order Details ── -->
+  <table class="info-table">
+    <tr>
+      <td>
+        <div class="info-block">
+          <div class="info-block-title">Bill To</div>
+          <p>
+            <strong>{{ customer_id }}</strong><br>
+            {% if customer_info %}
+              {{ customer_info.get('country', '') }}{% if customer_info.get('state') %}, {{ customer_info.get('state') }}{% endif %}<br>
+              {% if customer_info.get('phone') %}Phone: {{ customer_info.get('phone') }}{% endif %}
+            {% endif %}
+          </p>
+        </div>
+      </td>
+      <td>
+        <div class="info-block">
+          <div class="info-block-title">Order Details</div>
+          <p>
+            <strong>Order ID:</strong> {{ order_id }}<br>
+            <strong>Item Seq:</strong> {{ item_seq }}<br>
+            <strong>Timestamp:</strong> {{ order_ts }}<br>
+            {% if coupon_code %}
+            <strong>Coupon:</strong> <span class="coupon-badge">{{ coupon_code }}</span>
+            {% endif %}
+          </p>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- ── Line Items ── -->
+  <p class="section-title">Order Items</p>
+  <table class="items">
+    <thead>
+      <tr>
+        <th>Product ID</th>
+        <th>SKU</th>
+        <th>Category / Brand</th>
+        <th>Color / Size</th>
+        <th class="right">Qty</th>
+        <th class="right">Unit Price</th>
+        <th class="right">Discount</th>
+        <th class="right">Tax</th>
+        <th class="right">Line Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="product-id">{{ product_id }}</span></td>
+        <td><span class="sku-val">{{ product_info.get('sku', '—') if product_info else '—' }}</span></td>
+        <td>
+          {% if product_info %}
+            <strong>{{ product_info.get('category_code', '').upper() }}</strong>
+            <span class="sub-label">{{ product_info.get('brand_code', '') }}</span>
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if product_info %}
+            {{ product_info.get('color', '—') }}
+            <span class="sub-label">{{ product_info.get('size', '') }}</span>
+          {% else %}—{% endif %}
+        </td>
+        <td class="right"><strong>{{ quantity }}</strong></td>
+        <td class="right">{{ unit_price_currency }} {{ "%.2f"|format(unit_price|float) }}</td>
+        <td class="right" style="color:#059669;">{{ discount_pct }}%</td>
+        <td class="right">{{ unit_price_currency }} {{ "%.2f"|format(tax_amount|float) }}</td>
+        <td class="right"><strong>{{ unit_price_currency }} {{ "%.2f"|format(subtotal|float) }}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Pricing Summary ── -->
+  <table class="pricing-outer">
+    <tr>
+      <td class="spacer"></td>
+      <td>
+        <table class="pricing-box">
+          <tr class="pricing-row">
+            <td class="plabel">Subtotal</td>
+            <td class="pamount">{{ unit_price_currency }} {{ "%.2f"|format(subtotal|float) }}</td>
+          </tr>
+          {% if discount_amount > 0 %}
+          <tr class="pricing-row disc">
+            <td class="plabel">Discount ({{ discount_pct }}%)</td>
+            <td class="pamount">- {{ unit_price_currency }} {{ "%.2f"|format(discount_amount|float) }}</td>
+          </tr>
+          {% endif %}
+          <tr class="pricing-row">
+            <td class="plabel">Tax</td>
+            <td class="pamount">+ {{ unit_price_currency }} {{ "%.2f"|format(tax_amount|float) }}</td>
+          </tr>
+          <tr class="pricing-total">
+            <td class="plabel">TOTAL</td>
+            <td class="pamount">{{ unit_price_currency }} {{ "%.2f"|format(total|float) }}</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- ── Thank You ── -->
+  <div class="thank-you">
+    <p>Thank you for your order!</p>
+    <small>This invoice was automatically generated. Please retain it for your records.</small>
+  </div>
+
+  <!-- ── Footer ── -->
+  <table class="footer-table">
+    <tr>
+      <td style="width:60%;"><strong>{{ company_name }}</strong><br>{{ company_address }}</td>
+      <td class="right">Generated: {{ generated_at }}<br>Invoice-{{ order_id }}-{{ item_seq }}.pdf</td>
+    </tr>
+  </table>
+
+</body>
+</html>
